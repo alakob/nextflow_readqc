@@ -1,4 +1,4 @@
-# Nextflow Tutorial Pipeline
+# Nextflow ReadsQC Pipeline
 
 A demonstration Nextflow pipeline for processing FASTQ files, performing quality control, and trimming.
 
