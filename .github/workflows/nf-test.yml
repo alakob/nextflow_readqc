@@ -34,11 +34,15 @@ jobs:
           
       - name: Install nf-test
         run: |
-          curl -fsSL https://get.nf-test.com | bash
-          echo "$HOME/.nf-test/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.nf-test/bin:$PATH"
+          mkdir -p ~/bin
+          wget -q https://github.com/askimed/nf-test/releases/download/v0.9.2/nf-test-linux-x86_64.tar.gz
+          tar zxf nf-test-linux-x86_64.tar.gz
+          chmod +x nf-test
+          mv nf-test ~/bin/
+          echo "$HOME/bin" >> $GITHUB_PATH
+          export PATH="$HOME/bin:$PATH"
           echo "nf-test installation location: $(which nf-test || echo 'not found')"
-          ls -la $HOME/.nf-test/bin || echo "Directory not found"
+          ls -la ~/bin
           
       - name: Install fastq-generator
         run: |
@@ -56,9 +60,9 @@ jobs:
 
       - name: Run nf-test
         run: |
-          export PATH="$HOME/.nf-test/bin:$PATH"
+          export PATH="$HOME/bin:$PATH"
           echo "Running nf-test from: $(which nf-test || echo 'not found')"
-          $HOME/.nf-test/bin/nf-test test --profile=test
+          ~/bin/nf-test test --profile=test
 
       # Simple logging of test results instead of using potentially incompatible actions
       - name: Log test results
