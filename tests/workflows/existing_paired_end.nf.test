@@ -1,0 +1,62 @@
+nextflow_workflow {
+    name "Test Workflow existing_paired_end"
+    script "../../main.nf"
+    workflow "existing_paired_end"
+
+    test("process existing paired-end reads") {
+        when {
+            params {
+                generate_reads = false
+                paired_end = true
+                outdir = 'results'
+            }
+            setup {
+                // Clean results directory if it exists to avoid interference from previous test runs
+                def resultsDir = file("results")
+                if (resultsDir.exists()) {
+                    resultsDir.deleteDir()
+                }
+                
+                // Create test FASTQ files directly in the test/data directory
+                def dataDir = file("tests/data")
+                if (!dataDir.exists()) {
+                    dataDir.mkdirs()
+                }
+                
+                // Create paired-end test files with the correct naming pattern for Channel.fromFilePairs
+                // Files need to follow pattern: sample_1.fastq and sample_2.fastq for the same sample
+                
+                def read1 = file("tests/data/sample_1.fastq")
+                def read2 = file("tests/data/sample_2.fastq")
+                read1.text = '''@seq1
+ACGTACGT
++
+IIIIIIII
+'''
+                read2.text = '''@seq1
+TGCATGCA
++
+IIIIIIII
+'''
+                
+                // Update params to use the created files with the correct pattern for fromFilePairs
+                params.reads = 'tests/data/sample_{1,2}.fastq'
+            }
+        }
+        then {
+            assert workflow.success
+            
+            // Look for any FastQC output files
+            def resultsDir = file('results')
+            assert resultsDir.exists()
+            
+            // Check that some output files were generated
+            def fastqcDirs = [file('results/fastqc'), file('results/fastqc_raw')]
+            assert fastqcDirs.any { it.exists() && it.list().size() > 0 }
+            
+            // Verify trimmed outputs exist
+            def trimmedDir = file('results/trimmed')
+            assert trimmedDir.exists() && trimmedDir.list().size() > 0
+        }
+    }
+}

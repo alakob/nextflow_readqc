@@ -1,0 +1,82 @@
+nextflow_process {
+    name "Test Process fastp_trim"
+    script "../../main.nf"
+    process "fastp_trim"
+
+    test("trim paired-end reads") {
+        when {
+            process {
+                """
+                // Create test FASTQ files directly
+                def read1 = file("test_1.fastq")
+                def read2 = file("test_2.fastq")
+                read1.text = '''@seq1
+ACGTACGT
++
+IIIIIIII
+'''
+                read2.text = '''@seq1
+TGCATGCA
++
+IIIIIIII
+'''
+                
+                input[0] = tuple("test", read1, read2)
+                """
+            }
+        }
+        then {
+            assert process.success
+            
+            // Check output files using process.out
+            assert process.out.size() > 0
+            
+            // Navigate the correct output structure
+            def output = process.out[0][0]
+            assert output.size() == 3
+            
+            // Check R1 and R2 output files
+            assert path(output[1]).exists()
+            assert path(output[2]).exists()
+            assert output[1].toString().contains('trimmed_test_R1.fastq')
+            assert output[2].toString().contains('trimmed_test_R2.fastq')
+        }
+    }
+
+    test("trim single-end reads") {
+        when {
+            process {
+                """
+                // Create test FASTQ file directly
+                def read = file("test_single.fastq")
+                read.text = '''@seq1
+GCATGCAT
++
+IIIIIIII
+'''
+                
+                // Create empty file for R2 but mark it as optional
+                def emptyR2 = file("empty_r2.fastq")
+                emptyR2.text = ''
+                
+                input[0] = tuple("test", read, emptyR2)
+                """
+            }
+        }
+        then {
+            assert process.success
+            
+            // Check output files using process.out
+            assert process.out.size() > 0
+            
+            // Navigate the correct output structure
+            def output = process.out[0][0]
+            assert output.size() == 3
+            
+            // Check R1 output file exists
+            assert path(output[1]).exists()
+            assert output[1].toString().contains('trimmed_test_R1.fastq')
+        }
+    }
+}
+

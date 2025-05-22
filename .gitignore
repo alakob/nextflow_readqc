@@ -1,0 +1,30 @@
+# Nextflow specific
+.nextflow*
+work/
+results/
+.nf-test/
+
+# Temporary files
+*.fastq
+*.fq
+*.log
+*.txt
+*.html
+*.zip
+.DS_Store
+
+# Docker
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Testing
+test-results/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock

@@ -1,0 +1,81 @@
+name: Nextflow Pipeline Tests
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run nf-test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: '23.04.0'
+
+      - name: Install nf-test
+        run: |
+          python -m pip install --upgrade pip
+          pip install nf-test
+
+      - name: Install dependencies for tests
+        run: |
+          # Install fastq-generator
+          pip install fastq-generator
+          # Install other tools needed for testing
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fastqc
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install fastp
+        run: |
+          # Only install fastp if not using Docker
+          if [[ "$(grep -c 'docker.enabled = false' nextflow.config || echo 0)" -gt 0 ]]; then
+            wget http://opengene.org/fastp/fastp
+            chmod a+x ./fastp
+            sudo mv ./fastp /usr/local/bin/
+          fi
+
+      - name: Run function tests
+        run: |
+          nextflow run tests/functions/function_test.nf
+
+      - name: Run nf-test
+        run: |
+          nf-test test --profile=test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: nf-test-results
+          path: |
+            .nf-test/
+            work/
+            results/
+
+      - name: Publish Test Report
+        if: always()
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '.nf-test/test-reports/*.xml'
+          fail_on_failure: true

@@ -1,0 +1,28 @@
+nextflow_process {
+    name "Test Process generate_fastq"
+    script "../../main.nf"
+    process "generate_fastq"
+
+    test("generate paired-end reads") {
+        when {
+            params {
+                paired_end = true
+            }
+        }
+        then {
+            assert process.success
+        }
+    }
+
+    test("generate single-end reads") {
+        when {
+            params {
+                paired_end = false
+            }
+        }
+        then {
+            assert process.success
+        }
+    }
+}
+

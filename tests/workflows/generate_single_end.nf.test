@@ -1,0 +1,22 @@
+nextflow_workflow {
+    name "Test Workflow generate_single_end"
+    script "../../main.nf"
+    workflow "generate_single_end"
+
+    test("generate and process single-end reads") {
+        when {
+            params {
+                generate_reads = true
+                paired_end = false
+                num_reads = 10
+                outdir = 'results'
+            }
+        }
+        then {
+            assert workflow.success
+            assert file('results/fastqc_raw/synthetic_R1_fastqc.zip').exists()
+            assert file('results/trimmed/trimmed_synthetic_R1.fastq').exists()
+            assert file('results/fastqc_trimmed/trimmed_synthetic_R1_fastqc.zip').exists()
+        }
+    }
+}
