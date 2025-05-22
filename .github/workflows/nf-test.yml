@@ -29,24 +29,22 @@ jobs:
       - name: Install Python and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 python3-pip fastqc cargo
+          sudo apt-get install -y python3 python3-pip fastqc curl
           python3 -m pip install --upgrade pip
           
+      # Install nf-test using the exact version from GitHub without using the installer script
       - name: Install nf-test
         run: |
-          mkdir -p ~/bin
-          wget -q https://github.com/askimed/nf-test/releases/download/v0.9.2/nf-test-linux-x86_64.tar.gz
-          tar zxf nf-test-linux-x86_64.tar.gz
-          chmod +x nf-test
-          mv nf-test ~/bin/
-          echo "$HOME/bin" >> $GITHUB_PATH
-          export PATH="$HOME/bin:$PATH"
-          echo "nf-test installation location: $(which nf-test || echo 'not found')"
-          ls -la ~/bin
-          
-      - name: Install fastq-generator
-        run: |
-          cargo install fastq-generator
+          wget -q https://github.com/nextflow-io/nf-test/releases/download/v0.8.4/nf-test-0.8.4-all.jar
+          mkdir -p $HOME/.nf-test/bin
+          echo '#!/bin/sh\njava -jar '$HOME'/.nf-test/bin/nf-test.jar "$@"' > $HOME/.nf-test/bin/nf-test
+          cp nf-test-0.8.4-all.jar $HOME/.nf-test/bin/nf-test.jar
+          chmod +x $HOME/.nf-test/bin/nf-test
+          export PATH="$HOME/.nf-test/bin:$PATH"
+          echo "$HOME/.nf-test/bin" >> $GITHUB_PATH
+          echo "nf-test installation location:"
+          ls -la $HOME/.nf-test/bin
+          $HOME/.nf-test/bin/nf-test --version || echo "Could not determine version"
 
       - name: Install fastp
         run: |
@@ -60,18 +58,21 @@ jobs:
 
       - name: Run nf-test
         run: |
-          export PATH="$HOME/bin:$PATH"
-          echo "Running nf-test from: $(which nf-test || echo 'not found')"
-          ~/bin/nf-test test --profile=test
+          # Make sure nf-test is in the PATH
+          export PATH="$HOME/.nf-test/bin:$PATH"
+          
+          # Directly use the wrapper script we created
+          echo "Running nf-test version:"
+          $HOME/.nf-test/bin/nf-test --version || echo "Could not determine version"
+          
+          # Run the tests
+          $HOME/.nf-test/bin/nf-test test --debug
 
-      # Simple logging of test results instead of using potentially incompatible actions
-      - name: Log test results
-        if: always()
+      # Additional validation steps
+      - name: Verify pipeline structure
         run: |
-          echo "Test execution completed"
-          if [ -d ".nf-test/test-reports" ]; then
-            echo "Test reports found. Summary:"
-            find .nf-test/test-reports -name "*.xml" -exec grep -l "<testsuite" {} \; | xargs cat | grep -E 'failures="[^0]|errors="[^0]' || echo "All tests passed"
-          else
-            echo "No test reports found"
-          fi
+          # Display module structure
+          find modules -type f -name "*.nf" | sort
+          
+          # Display test structure
+          find tests -type f -name "*.nf.test" -o -name "function_test.nf" | sort
