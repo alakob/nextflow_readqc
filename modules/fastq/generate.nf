@@ -8,16 +8,20 @@ process generate_fastq {
     tuple val("synthetic"), path("synthetic_R1.fastq"), path("synthetic_R2.fastq", optional: true)
 
     script:
+    def num_reads = params.num_reads ?: 10  // Default to 10 reads instead of 1000
+    def seq_size = params.seq_size ?: 100   // Make sequence size configurable
+    def fastq_gen = params.fastq_generator ?: '/Users/alakob/.local/bin/fastq-generator'
+
     if (params.paired_end) {
         // For paired-end reads we need to run the command twice, once for each file
         """
-        /Users/alakob/.local/bin/fastq-generator generate_random_fastq_se --sequence-size 100 --nb_seq ${params.num_reads ?: 1000} --output synthetic_R1.fastq
-        /Users/alakob/.local/bin/fastq-generator generate_random_fastq_se --sequence-size 100 --nb_seq ${params.num_reads ?: 1000} --output synthetic_R2.fastq
+        ${fastq_gen} generate_random_fastq_se --sequence-size ${seq_size} --nb_seq ${num_reads} --output synthetic_R1.fastq
+        ${fastq_gen} generate_random_fastq_se --sequence-size ${seq_size} --nb_seq ${num_reads} --output synthetic_R2.fastq
         """
     } else {
         // For single-end, don't create R2 file
         """
-        /Users/alakob/.local/bin/fastq-generator generate_random_fastq_se --sequence-size 100 --nb_seq ${params.num_reads ?: 1000} --output synthetic_R1.fastq
+        ${fastq_gen} generate_random_fastq_se --sequence-size ${seq_size} --nb_seq ${num_reads} --output synthetic_R1.fastq
         touch synthetic_R2.fastq
         """
     }

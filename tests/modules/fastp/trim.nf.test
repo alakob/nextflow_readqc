@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process fastp_trim with Paired-End Reads"
+    script "../../../modules/fastp/trim.nf" // Adjusted path relative to the test file
+    process "fastp_trim"
+
+    test("Should run fastp_trim successfully with paired-end data and produce expected output files") {
+
+        when {
+            params {
+                outdir = "tests/results/fastp_trim" // Define outdir for publishDir
+            }
+            process { // This is the ProcessContext block
+                """
+                // input[0] refers to the first input channel of the 'fastp_trim' process.
+                // This channel should emit one item: a tuple.
+                // We represent the tuple as a list.
+                input[0] = Channel.of(
+                    ['test_sample_pe', file("${projectDir}/tests/data/fastq/sample_R1.fastq"), file("${projectDir}/tests/data/fastq/sample_R2.fastq")]
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // snapshot will check the structure of the output channel:
+            // e.g., [ ['test_sample_pe', path('trimmed_test_sample_pe_R1.fastq'), path('trimmed_test_sample_pe_R2.fastq')] ]
+            // It will also check that these files exist and are not empty by default.
+            assert snapshot(process.out).match()
+        }
+    }
+}

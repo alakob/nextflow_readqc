@@ -13,11 +13,11 @@ process fastp_trim {
     script:
     if (read2) {
         """
-        fastp -i ${read1} -I ${read2} -o trimmed_${id}_R1.fastq -O trimmed_${id}_R2.fastq
+        fastp -i ${read1} -I ${read2} -o trimmed_${id}_R1.fastq -O trimmed_${id}_R2.fastq --disable_quality_filtering --disable_length_filtering --disable_trim_poly_g --html /dev/null --json /dev/null
         """
     } else {
         """
-        fastp -i ${read1} -o trimmed_${id}_R1.fastq
+        fastp -i ${read1} -o trimmed_${id}_R1.fastq --disable_quality_filtering --disable_length_filtering --disable_trim_poly_g --html /dev/null --json /dev/null
         """
     }
 }

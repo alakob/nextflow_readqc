@@ -1,0 +1,49 @@
+name: Nextflow CI with nf-test
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main  # Adjust if your main branch is named differently (e.g., master)
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  run-nf-tests:
+    name: Run nf-test
+    runs-on: ubuntu-latest # Use a Linux runner with Docker pre-installed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Popular OpenJDK distribution
+          java-version: '17'     # Nextflow generally works well with Java 11 or 17
+
+      - name: Install Nextflow
+        run: |
+          echo "Installing Nextflow..."
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/nextflow
+          echo "Nextflow installed: $(nextflow -v)"
+
+      - name: Install nf-test
+        run: |
+          NF_TEST_VERSION="0.9.2" # Using the version you have
+          echo "Installing nf-test v${NF_TEST_VERSION}..."
+          wget --quiet "https://github.com/askimed/nf-test/releases/download/v${NF_TEST_VERSION}/nf-test-${NF_TEST_VERSION}-linux-x86_64" -O nf-test
+          chmod +x nf-test
+          sudo mv nf-test /usr/local/bin/nf-test
+          echo "nf-test installed: $(nf-test --version)"
+
+      - name: Run nf-test for fastp_trim
+        run: |
+          nf-test test tests/modules/fastp/trim.nf.test
+        # If you want to run all tests in your project in the future, you can change the above to:
+        # nf-test test

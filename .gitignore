@@ -7,6 +7,10 @@ results/
 # Temporary files
 *.fastq
 *.fq
+
+# Allow specific test data files for nf-test
+!tests/data/fastq/sample_R1.fastq
+!tests/data/fastq/sample_R2.fastq
 *.log
 *.txt
 *.html
