@@ -35,10 +35,10 @@ jobs:
 
       - name: Install nf-test
         run: |
-          NF_TEST_VERSION="0.9.2" # Using the version you have
+          NF_TEST_VERSION="0.9.2" # Specify the version you want
           echo "Installing nf-test v${NF_TEST_VERSION}..."
-          wget --quiet "https://github.com/askimed/nf-test/releases/download/v${NF_TEST_VERSION}/nf-test-${NF_TEST_VERSION}-linux-x86_64" -O nf-test
-          chmod +x nf-test
+          curl -fsSL https://get.nf-test.com | bash -s ${NF_TEST_VERSION}
+          # The script downloads nf-test to the current directory
           sudo mv nf-test /usr/local/bin/nf-test
           echo "nf-test installed: $(nf-test --version)"
 
